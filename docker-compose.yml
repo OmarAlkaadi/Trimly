@@ -1,0 +1,32 @@
+services:
+
+  # Name des Dienstes
+  postgres:             
+    # Offizielles PostgreSQL 17, "alpine" = kleines Image                                                              
+    image: postgres:17-alpine                
+    # Fester Name, damit Befehle wie "docker exec trimly-db" funktionieren
+    container_name: trimly-db        
+    # Startet automatisch mit Docker Desktop, außer du stoppst ihn selbst
+    restart: unless-stopped  
+    # Diese Variablen liest das Postgres-Image beim ERSTEN Start  
+    environment:    
+      # ${...} = Wert aus deiner .env (Compose liest .env automatisch)                                                     
+      POSTGRES_DB: ${POSTGRES_DB}                                                    
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      # Rechner-Port:Container-Port, aber nur für DEINEN PC (localhost)
+      - "127.0.0.1:5432:5432"
+    volumes:
+      # Daten liegen in einem Volume und bleiben beim Neustart erhalten
+      - postgres-data:/var/lib/postgresql/data
+    # Docker fragt alle 5 s: "Bist du bereit?"
+    healthcheck:
+       # $$ = ein echtes $ → die Variable wird erst IM Container aufgelöst, nicht von Compose
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres-data:
